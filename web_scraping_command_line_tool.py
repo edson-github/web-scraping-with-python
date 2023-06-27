@@ -14,11 +14,9 @@ def load_json(database_json_file="scraped_data.json"):
     """
     try:
         with open(database_json_file, "r") as read_it: 
-            all_data_base = json.loads(read_it.read())
-            return all_data_base
+            return json.loads(read_it.read())
     except:
-        all_data_base = dict()
-        return all_data_base
+        return {}
 
 
 def save_scraped_data_in_json(data, database_json_file="scraped_data.json"):
@@ -26,9 +24,8 @@ def save_scraped_data_in_json(data, database_json_file="scraped_data.json"):
     This function Save the scraped data in json format. scraped_data.json file if it exist else create it.
     if file already exist you can view previous scraped data
     """
-    file_obj =  open(database_json_file, "w")
-    file_obj.write(json.dumps(data))
-    file_obj.close()
+    with open(database_json_file, "w") as file_obj:
+        file_obj.write(json.dumps(data))
 
 
 def existing_scraped_data_init(json_db):
@@ -37,7 +34,7 @@ def existing_scraped_data_init(json_db):
     """
     scraped_data = json_db.get("scraped_data")
     if scraped_data is None:
-        json_db['scraped_data'] = dict()
+        json_db['scraped_data'] = {}
 
     return None
 
@@ -47,8 +44,7 @@ def scraped_time_is():
     This function create time stamp for keep our book issue record trackable 
     """
     now = datetime.now()
-    dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
-    return dt_string
+    return now.strftime("%d/%m/%Y %H:%M:%S")
 
 def process_url_request(website_url):
     """
@@ -57,8 +53,7 @@ def process_url_request(website_url):
     """
     requets_data = requests.get(website_url)
     if requets_data.status_code == 200:
-        soup = BeautifulSoup(requets_data.text,'html')
-        return soup
+        return BeautifulSoup(requets_data.text,'html')
     return None
 
 def proccess_beautiful_soup_data(soup):
@@ -97,7 +92,7 @@ while True:
         scraped_websites_table = BeautifulTable()
         scraped_websites_table.columns.header = ["Sr no.", "Allias name ", "Website domain", "title",   "Scraped at", "Status"]
         scraped_websites_table.set_style(BeautifulTable.STYLE_BOX_DOUBLED)
-        
+
 
         local_json_db = load_json()
         for count,  data in enumerate(local_json_db['scraped_data']):
@@ -111,12 +106,11 @@ while True:
         if not local_json_db['scraped_data']:
             print('===> No existing data found !!!')
         print(scraped_websites_table)
-    
+
     elif choice == 2:
         print()
         url_for_scrap = input("===> Please enter url you want to scrap:")
-        is_accessable = process_url_request(url_for_scrap)
-        if is_accessable:
+        if is_accessable := process_url_request(url_for_scrap):
             scraped_data_packet = proccess_beautiful_soup_data(is_accessable)
             print()
             print(' =====> Data scraped successfully !!!')
@@ -126,7 +120,9 @@ while True:
             scraped_data_packet['scraped_at'] = scraped_time_is()
             if key_for_storing_data in  local_json_db['scraped_data']:
                 key_for_storing_data = key_for_storing_data + str(scraped_time_is())
-                print("Provided key is already exist so data stored as : {}".format(key_for_storing_data))
+                print(
+                    f"Provided key is already exist so data stored as : {key_for_storing_data}"
+                )
             scraped_data_packet['alias'] = key_for_storing_data
             scraped_data_packet['status'] = True
             scraped_data_packet['domain'] = urlparse(url_for_scrap).netloc
@@ -140,11 +136,7 @@ while True:
             local_json_db = load_json()
             print(' =====> Data saved successfully !!!')
             print()
-    elif choice == 3:
-        print('Thank you for using !!!')
-        break
-
-    elif choice == 4:
+    elif choice in {3, 4}:
         print('Thank you for using !!!')
         break
 
